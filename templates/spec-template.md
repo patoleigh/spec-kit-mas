@@ -5,6 +5,19 @@
 **Status**: Draft  
 **Input**: User description: "$ARGUMENTS"
 
+## Feature Context
+
+<!--
+  ACTION REQUIRED: Capture the business and operational context for this
+  feature in a concise way. This section should describe the product context
+  the feature belongs to, not the implementation plan.
+-->
+
+**Target Stack**: [CakePHP 2.x + MySQL | Moodle 5 Plugin | Moodle 5 -- Portal | Laravel + Inertia + React | NEEDS CLARIFICATION]  
+**Primary User Types**: [e.g., student, instructor, coordinator, admin, client, support]  
+**Operational Context**: [e.g., course management, enrollment, certification, reporting, back-office workflow, plugin extension, portal flow]  
+**Existing System Dependencies**: [existing modules, plugins, APIs, portals, services, or N/A]
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -99,6 +112,20 @@
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
+
+## Access, Data & Operational Considerations
+
+<!--
+  ACTION REQUIRED: Capture feature-level impact in these areas to help planning.
+  Keep this section focused on business and operational understanding, not
+  implementation or delivery mechanics.
+-->
+
+**Access / Permissions Impact**: [Does this affect authentication, authorization, roles, capabilities, or visibility rules?]  
+**Sensitive or Important Data Impact**: [Does this involve personal, academic, progress, certificate, or client-sensitive data?]  
+**Auditability / Traceability Needs**: [Are there actions or changes that must be traceable?]  
+**Administrative Workflow Impact**: [Does this affect admin, coordinator, client, or support workflows?]  
+**Operational Load Impact**: [Does this require large listings, filters, pagination, reports, exports, or batch actions?]
 
 ## Success Criteria *(mandatory)*
 

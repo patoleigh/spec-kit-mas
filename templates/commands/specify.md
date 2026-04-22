@@ -149,7 +149,7 @@ Given that feature description, do this:
       
       ## Content Quality
       
-      - [ ] No implementation details (languages, frameworks, APIs)
+      - [ ] No implementation details beyond approved contextual references (e.g., Target Stack or existing system dependencies)
       - [ ] Focused on user value and business needs
       - [ ] Written for non-technical stakeholders
       - [ ] All mandatory sections completed
@@ -268,7 +268,10 @@ Given that feature description, do this:
 ## Quick Guidelines
 
 - Focus on **WHAT** users need and **WHY**.
-- Avoid HOW to implement (no tech stack, APIs, code structure).
+- Avoid HOW to implement. Target Stack and existing platform/module/service
+  dependencies may appear as feature context, but detailed implementation
+  design, framework-specific coding choices, APIs, and code structure belong in
+  planning.
 - Written for business stakeholders, not developers.
 - DO NOT create any checklists that are embedded in the spec. That will be a separate command.
 

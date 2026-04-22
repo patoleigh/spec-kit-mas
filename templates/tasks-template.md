@@ -20,10 +20,11 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- **Single project / legacy app**: repo-root app/module paths plus `tests/`
+- **Structured web app**: `backend/`, `frontend/`, `tests/`
+- **Plugin / portal module**: platform-appropriate module paths plus `tests/`
+- Paths shown below are illustrative examples only - always use the real paths
+  from `plan.md`
 
 <!-- 
   ============================================================================
@@ -49,8 +50,8 @@ description: "Task list template for feature implementation"
 **Purpose**: Project initialization and basic structure
 
 - [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize [language] project with [framework] dependencies
-- [ ] T003 [P] Configure linting and formatting tools
+- [ ] T002 Confirm selected stack/module structure and shared dependencies in [root/path]
+- [ ] T003 [P] Prepare shared configuration and environment settings in [config/path]
 
 ---
 
@@ -62,12 +63,12 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Define or update shared permissions, roles, capabilities, or visibility rules in [auth/config/path]
+- [ ] T005 [P] Define or update core entities, persistence artifacts, or compatibility constraints in [data/path]
+- [ ] T006 [P] Prepare shared validation, error-handling, and logging approach in [shared/path]
+- [ ] T007 Create base models/services/components that all stories depend on in [shared/path]
+- [ ] T008 [P] Prepare integration touchpoints with existing modules, plugins, portals, or services in [integration/path]
+- [ ] T009 Confirm shared listing/filter/report/export patterns or operational constraints in [module/path]
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -88,12 +89,12 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T012 [P] [US1] Create or update [Entity1] persistence/model artifact in [path/to/file]
+- [ ] T013 [P] [US1] Create or update [Entity2] component/workflow artifact in [path/to/file]
+- [ ] T014 [US1] Implement story logic/service/module behavior in [path/to/file] (depends on T012, T013)
+- [ ] T015 [US1] Implement user-facing or admin-facing flow in [path/to/file]
+- [ ] T016 [US1] Apply permissions, validation, and safe error handling for this story in [path/to/file]
+- [ ] T017 [US1] Add audit/logging/traceability support for this story in [path/to/file]
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -112,10 +113,10 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T020 [P] [US2] Create or update [Entity] persistence/model artifact in [path/to/file]
+- [ ] T021 [US2] Implement story-specific service/module/workflow logic in [path/to/file]
+- [ ] T022 [US2] Implement listing/filter/report/export/admin interaction in [path/to/file] (if relevant)
+- [ ] T023 [US2] Integrate with existing modules, plugins, services, or User Story 1 components in [path/to/file]
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -134,9 +135,9 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T026 [P] [US3] Create or update [Entity] persistence/model artifact in [path/to/file]
+- [ ] T027 [US3] Implement story-specific service/module/workflow logic in [path/to/file]
+- [ ] T028 [US3] Implement integration, visibility, reporting, or operational UX behavior in [path/to/file]
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -150,11 +151,14 @@ Examples of foundational tasks (adjust based on your project):
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] TXXX [P] Documentation updates in docs/
+- [ ] TXXX [P] Documentation or user-manual updates in [docs/path]
 - [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance optimization across all stories
+- [ ] TXXX Performance and operational-flow checks across affected stories
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
-- [ ] TXXX Security hardening
+- [ ] TXXX Security hardening and permissions verification
+- [ ] TXXX Audit/logging verification for critical actions
+- [ ] TXXX Admin workflow, report/export, or pagination validation (when relevant)
+- [ ] TXXX Release-readiness and quickstart/acceptance validation against plan.md
 - [ ] TXXX Run quickstart.md validation
 
 ---
@@ -179,8 +183,9 @@ Examples of foundational tasks (adjust based on your project):
 ### Within Each User Story
 
 - Tests (if included) MUST be written and FAIL before implementation
-- Models before services
-- Services before endpoints
+- Persistence/components before story logic
+- Story logic before user/admin workflow integration
+- Permissions, validation, and auditability before story sign-off
 - Core implementation before integration
 - Story complete before moving to next priority
 
@@ -203,8 +208,8 @@ Task: "Contract test for [endpoint] in tests/contract/test_[name].py"
 Task: "Integration test for [user journey] in tests/integration/test_[name].py"
 
 # Launch all models for User Story 1 together:
-Task: "Create [Entity1] model in src/models/[entity1].py"
-Task: "Create [Entity2] model in src/models/[entity2].py"
+Task: "Create or update [Entity1] persistence/model artifact in [path/to/file]"
+Task: "Create or update [Entity2] component/workflow artifact in [path/to/file]"
 ```
 
 ---
@@ -245,6 +250,8 @@ With multiple developers:
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
+- Include permissions, data handling, admin workflow, auditability, and
+  operational tasks when the spec or plan marks them as relevant
 - Verify tests fail before implementing
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently

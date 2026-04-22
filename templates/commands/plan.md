@@ -62,11 +62,21 @@ You **MUST** consider the user input before proceeding (if not empty).
 2. **Load context**: Read FEATURE_SPEC and `/memory/constitution.md`. Load IMPL_PLAN template (already copied).
 
 3. **Execute plan workflow**: Follow the structure in IMPL_PLAN template to:
-   - Fill Technical Context (mark unknowns as "NEEDS CLARIFICATION")
-   - Fill Constitution Check section from constitution
+   - Fill Technical Context, including selected approved stack, stack fit,
+     exception status, and delivery-sensitive context (mark unknowns as
+     "NEEDS CLARIFICATION")
+   - Fill Constitution Check section from constitution with explicit pass/fail
+     reasoning for stack alignment, security/privacy, data impact,
+     auditability, admin workflows, operational reliability, maintainability,
+     deployment path, and rollback readiness
+   - Fill Impact Assessment and Implementation Considerations sections based on
+     the feature spec and constitution
    - Evaluate gates (ERROR if violations unjustified)
    - Phase 0: Generate research.md (resolve all NEEDS CLARIFICATION)
    - Phase 1: Generate data-model.md, contracts/, quickstart.md
+   - Phase 1: Ensure the resulting design artifacts support the selected stack
+     and any applicable security, data-model, admin, performance, QA, release,
+     and rollback requirements captured in the plan
    - Phase 1: Update agent context by running the agent script
    - Re-evaluate Constitution Check post-design
 
@@ -109,6 +119,8 @@ You **MUST** consider the user input before proceeding (if not empty).
    - For each NEEDS CLARIFICATION → research task
    - For each dependency → best practices task
    - For each integration → patterns task
+   - For each stack, security, data, admin, delivery, or rollback uncertainty
+     → constraint-resolution task
 
 2. **Generate and dispatch research agents**:
 
@@ -134,6 +146,8 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Entity name, fields, relationships
    - Validation rules from requirements
    - State transitions if applicable
+   - Call out schema, migration, seeding, and data-dictionary implications when
+     relevant to the selected stack
 
 2. **Define interface contracts** (if project has external interfaces) → `/contracts/`:
    - Identify what interfaces the project exposes to users or other systems
@@ -143,6 +157,11 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 3. **Agent context update**:
    - Update the plan reference between the `<!-- SPECKIT START -->` and `<!-- SPECKIT END -->` markers in `__CONTEXT_FILE__` to point to the plan file created in step 1 (the IMPL_PLAN path)
+
+4. **Validate delivery readiness in the plan**:
+   - Confirm branch strategy, QA path, deployment plan, rollback plan, and
+     production validation are explicitly documented
+   - ERROR if delivery-sensitive work omits those sections without a valid N/A
 
 **Output**: data-model.md, /contracts/*, quickstart.md, updated agent context file
 

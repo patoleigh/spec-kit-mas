@@ -51,6 +51,13 @@ from typer.core import TyperGroup
 # For cross-platform keyboard input
 import readchar
 
+from .stacks import (
+    STACK_CONTEXT_FILE,
+    approved_stack_help,
+    get_stack_profile,
+    write_stack_context,
+)
+
 def _build_agent_config() -> dict[str, dict[str, Any]]:
     """Derive AGENT_CONFIG from INTEGRATION_REGISTRY."""
     from .integrations import INTEGRATION_REGISTRY
@@ -876,6 +883,33 @@ def ensure_constitution_from_template(project_path: Path, tracker: StepTracker |
             console.print(f"[yellow]Warning: Could not initialize constitution: {e}[/yellow]")
 
 
+def ensure_stack_context(
+    project_path: Path,
+    stack_id: str | None,
+    tracker: StepTracker | None = None,
+) -> tuple[str, str] | None:
+    """Persist the approved project stack profile when one is selected."""
+
+    if not stack_id:
+        if tracker:
+            tracker.add("stack", "Stack context setup")
+            tracker.skip("stack", "no stack selected")
+        return None
+
+    profile = get_stack_profile(stack_id)
+    if profile is None:
+        if tracker:
+            tracker.add("stack", "Stack context setup")
+            tracker.error("stack", f"unknown stack '{stack_id}'")
+        raise ValueError(f"Unknown approved stack: {stack_id}")
+
+    write_stack_context(project_path, profile)
+    if tracker:
+        tracker.add("stack", "Stack context setup")
+        tracker.complete("stack", profile.name)
+    return (profile.key, profile.name)
+
+
 INIT_OPTIONS_FILE = ".specify/init-options.json"
 
 
@@ -950,6 +984,7 @@ def init(
     ai_skills: bool = typer.Option(False, "--ai-skills", help="Install Prompt.MD templates as agent skills (requires --ai)"),
     offline: bool = typer.Option(False, "--offline", help="Deprecated (no-op). All scaffolding now uses bundled assets.", hidden=True),
     preset: str = typer.Option(None, "--preset", help="Install a preset during initialization (by preset ID)"),
+    stack: str = typer.Option(None, "--stack", help=f"Approved project stack: {approved_stack_help()}"),
     branch_numbering: str = typer.Option(None, "--branch-numbering", help="Branch numbering strategy: 'sequential' (001, 002, …, 1000, … — expands past 999 automatically) or 'timestamp' (YYYYMMDD-HHMMSS)"),
     integration: str = typer.Option(None, "--integration", help="Use the new integration system (e.g. --integration copilot). Mutually exclusive with --ai."),
     integration_options: str = typer.Option(None, "--integration-options", help='Options for the integration (e.g. --integration-options="--commands-dir .myagent/cmds")'),
@@ -986,6 +1021,7 @@ def init(
         specify init --here --ai codex --ai-skills
         specify init --here --ai codebuddy
         specify init --here --ai vibe      # Initialize with Mistral Vibe support
+        specify init --here --integration cursor-agent --stack laravel-inertia-react
         specify init --here
         specify init --here --force  # Skip confirmation when current directory not empty
         specify init my-project --ai claude   # Claude installs skills by default
@@ -1083,6 +1119,13 @@ def init(
         console.print(f"[red]Error:[/red] Invalid --branch-numbering value '{branch_numbering}'. Choose from: {', '.join(sorted(BRANCH_NUMBERING_CHOICES))}")
         raise typer.Exit(1)
 
+    requested_stack = stack
+    selected_stack = get_stack_profile(requested_stack)
+    if requested_stack and selected_stack is None:
+        console.print(f"[red]Error:[/red] Unknown stack '{stack}'")
+        console.print(f"[yellow]Approved stacks:[/yellow] {approved_stack_help()}")
+        raise typer.Exit(1)
+
     dir_existed_before = False
     if here:
         project_name = Path.cwd().name
@@ -1126,6 +1169,10 @@ def init(
                 console.print(error_panel)
                 raise typer.Exit(1)
 
+    existing_init_opts = load_init_options(project_path)
+    if selected_stack is None:
+        selected_stack = get_stack_profile(existing_init_opts.get("stack"))
+
     if ai_assistant:
         if ai_assistant not in AGENT_CONFIG:
             console.print(f"[red]Error:[/red] Invalid AI assistant '{ai_assistant}'. Choose from: {', '.join(AGENT_CONFIG.keys())}")
@@ -1167,6 +1214,10 @@ def init(
 
     if not here:
         setup_lines.append(f"{'Target Path':<15} [dim]{project_path}[/dim]")
+    if selected_stack:
+        setup_lines.append(
+            f"{'Stack':<15} [green]{selected_stack.name}[/green] [dim]({selected_stack.key})[/dim]"
+        )
 
     console.print(Panel("\n".join(setup_lines), border_style="cyan", padding=(1, 2)))
 
@@ -1227,6 +1278,7 @@ def init(
     for key, label in [
         ("chmod", "Ensure scripts executable"),
         ("constitution", "Constitution setup"),
+        ("stack", "Stack context setup"),
         ("git", "Install git extension"),
         ("workflow", "Install bundled workflow"),
         ("final", "Finalize"),
@@ -1276,6 +1328,11 @@ def init(
             tracker.complete("shared-infra", f"scripts ({selected_script}) + templates")
 
             ensure_constitution_from_template(project_path, tracker=tracker)
+            ensure_stack_context(
+                project_path,
+                selected_stack.key if selected_stack else None,
+                tracker=tracker,
+            )
 
             if not no_git:
                 tracker.start("git")
@@ -1374,6 +1431,10 @@ def init(
                 "script": selected_script,
                 "speckit_version": get_speckit_version(),
             }
+            if selected_stack:
+                init_opts["stack"] = selected_stack.key
+                init_opts["stack_name"] = selected_stack.name
+                init_opts["stack_context_file"] = STACK_CONTEXT_FILE.as_posix()
             # Ensure ai_skills is set for SkillsIntegration so downstream
             # tools (extensions, presets) emit SKILL.md overrides correctly.
             from .integrations.base import SkillsIntegration as _SkillsPersist

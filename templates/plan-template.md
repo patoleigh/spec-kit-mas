@@ -19,9 +19,13 @@ delivery-sensitive context]
   NEEDS CLARIFICATION and resolved in research.md before implementation.
 -->
 
-**Selected Approved Stack**: [CakePHP 2.x + MySQL | Moodle 5 Plugin | Moodle 5 Portal | Laravel + Inertia + React | NEEDS CLARIFICATION]  
-**Stack Fit / Justification**: [Why this approved stack fits the feature and the existing product context]  
-**Deviation / Exception Needed**: [None or explicit exception with rationale and approver path]  
+**Registered Project Stack**: [Read from `.specify/context/stack.md`; if absent, state that no stack is registered yet]<br>
+**Selected Approved Stack**: [Normally matches the registered stack; if not, explain the exception clearly]<br>
+**Stack Fit / Justification**: [Why this feature fits the registered stack and existing product context]<br>
+**Deviation / Exception Needed**: [None or explicit exception with rationale, scope, and approver path]<br>
+**Stack Profile Constraints**: [Relevant constraints pulled from `.specify/context/stack.md`]<br>
+**Stack-Specific Risks**: [Relevant risks pulled from `.specify/context/stack.md`]<br>
+**Expected Stack Artifacts**: [Artifacts this feature should produce for the selected stack]<br>
 **Language / Runtime**: [e.g., PHP 8.2, Node 20, MySQL 8 or NEEDS CLARIFICATION]  
 **Primary Dependencies**: [frameworks, packages, platform modules or NEEDS CLARIFICATION]  
 **Storage / Persistence**: [existing schema, new tables, files, N/A or NEEDS CLARIFICATION]  

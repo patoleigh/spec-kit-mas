@@ -7,6 +7,17 @@ from pathlib import Path
 
 
 STACK_CONTEXT_FILE = Path(".specify/context/stack.md")
+STACK_CONTEXT_REQUIRED_SECTIONS = (
+    "## Selected Stack",
+    "## Purpose / Typical Use",
+    "## When This Stack Fits",
+    "## When This Stack Is a Poor Fit",
+    "## Core Constraints",
+    "## Typical Risks",
+    "## Expected Artifacts",
+    "## Preferred Practices",
+    "## Things To Avoid",
+)
 
 
 @dataclass(frozen=True)
@@ -16,7 +27,9 @@ class StackProfile:
     key: str
     name: str
     purpose: str
-    constraints: tuple[str, ...]
+    when_it_fits: tuple[str, ...]
+    poor_fit: tuple[str, ...]
+    core_constraints: tuple[str, ...]
     typical_risks: tuple[str, ...]
     expected_artifacts: tuple[str, ...]
     preferred_practices: tuple[str, ...]
@@ -27,121 +40,161 @@ APPROVED_STACKS: dict[str, StackProfile] = {
     "cakephp2-mysql": StackProfile(
         key="cakephp2-mysql",
         name="CakePHP 2.x + MySQL",
-        purpose="Legacy business applications and admin-heavy workflows that must remain inside the existing CakePHP 2.x estate.",
-        constraints=(
-            "Preserve CakePHP 2.x conventions, controller/model/view boundaries, and legacy bootstrap behavior.",
-            "Favor incremental MySQL schema changes that are reversible and safe for existing data.",
-            "Work within the current deployment model and shared hosting or legacy infrastructure assumptions.",
+        purpose="Legacy internal and admin-heavy web applications that must stay compatible with the existing CakePHP 2.x estate and MySQL-backed operational data.",
+        when_it_fits=(
+            "The feature extends an existing CakePHP 2.x codebase, module, or back-office workflow instead of creating a new platform.",
+            "The work is centered on server-rendered CRUD, reporting, operational listings, approvals, exports, or compatibility-sensitive maintenance.",
+            "The business value depends on preserving the current authentication, deployment, hosting, and schema model instead of introducing a new application shell.",
+        ),
+        poor_fit=(
+            "Greenfield product surfaces that need a modern component-driven frontend or a new application platform.",
+            "Work that would require a de facto framework migration, SPA architecture, or a separate runtime to stay maintainable.",
+            "Heavy asynchronous integration or event-driven designs that would fight the legacy request lifecycle and operational environment.",
+        ),
+        core_constraints=(
+            "Preserve CakePHP 2.x conventions, controller/model/view boundaries, legacy bootstrap behavior, and established auth or ACL patterns.",
+            "Favor conservative MySQL migrations, explicit rollback planning, and schema changes that are safe for live operational data.",
+            "Assume legacy compatibility and hosting constraints are real unless the plan records an approved exception.",
         ),
         typical_risks=(
-            "Tight coupling in legacy code paths and side effects across reused models or components.",
-            "Slow queries, pagination regressions, or export bottlenecks on large back-office datasets.",
-            "Fragile migrations or manual production fixes when schema changes are insufficiently planned.",
+            "Tight coupling in reused models, helpers, or components causing regressions far from the feature entry point.",
+            "Slow queries, pagination regressions, or export/report timeouts on large operational datasets.",
+            "Hidden manual SQL, ad hoc production data fixes, or fragile migrations that bypass traceable delivery controls.",
         ),
         expected_artifacts=(
-            "Updated controllers, models, views, and any shared components or helpers touched by the feature.",
-            "Explicit MySQL schema or migration notes plus validation and rollback steps.",
-            "QA notes covering admin workflows, listings, filters, exports, and permission-sensitive paths.",
+            "Controller, model, view, component, helper, shell, or config changes that stay aligned with the CakePHP 2.x structure already in use.",
+            "Documented MySQL schema or migration impact, validation rules, indexes, seed or backfill needs, and rollback notes.",
+            "QA coverage for permissions, admin flows, listings, filters, exports, and other operational paths touched by the feature.",
         ),
         preferred_practices=(
-            "Reuse established CakePHP patterns before introducing new abstractions.",
-            "Document query, indexing, and pagination implications for admin or reporting screens.",
-            "Keep changes traceable and low-risk, especially around shared models and operational data.",
+            "Reuse established CakePHP components, helpers, and query patterns before introducing new abstractions.",
+            "Keep data-model, pagination, indexing, and report/export impacts explicit in the plan and tasks.",
+            "Make risky legacy touchpoints visible early so QA, deployment, and rollback planning are not afterthoughts.",
         ),
         avoid=(
-            "Do not introduce architecture that bypasses CakePHP conventions without a recorded exception.",
-            "Do not hide schema changes, manual SQL, or production data fixes outside the plan.",
-            "Do not ship large-listing or export changes without operational validation.",
+            "Do not smuggle in a parallel frontend architecture or framework migration under a normal feature request.",
+            "Do not bypass migrations, data-model documentation, or delivery traceability with direct database changes.",
+            "Do not ship large-listing or admin workflow changes without validating performance, pagination, and rollback behavior.",
         ),
     ),
     "moodle5-plugin": StackProfile(
         key="moodle5-plugin",
         name="Moodle 5 Plugin",
-        purpose="Isolated Moodle 5 functionality delivered as a plugin that fits Moodle extension points and release processes.",
-        constraints=(
-            "Stay inside Moodle 5 plugin APIs, capabilities, events, privacy, and upgrade-step conventions.",
-            "Preserve compatibility with the hosting Moodle instance and supported plugin boundaries.",
-            "Respect Moodle language strings, renderer patterns, and admin UX expectations.",
+        purpose="Bounded Moodle 5 extensions delivered as plugins that fit Moodle's plugin APIs, lifecycle, permissions, privacy model, and Bootstrap 5-based UI reality.",
+        when_it_fits=(
+            "The feature is a discrete Moodle capability that can live inside a standard plugin boundary with clear ownership.",
+            "The work fits Moodle plugin APIs, capabilities, forms, events, privacy APIs, scheduled tasks, and upgrade steps.",
+            "UI work can stay inside Moodle's rendering model, Mustache or renderer patterns, and the Bootstrap 5 conventions already present in Moodle 5.",
+        ),
+        poor_fit=(
+            "Requests that really require a broader portal or cross-area institutional workflow rather than a bounded plugin.",
+            "Features that only work by patching Moodle core, replacing shared portal navigation, or ignoring Moodle's upgrade lifecycle.",
+            "Frontend-heavy experiences that assume a custom standalone application shell instead of Moodle's plugin and Bootstrap 5 environment.",
+        ),
+        core_constraints=(
+            "Stay inside Moodle 5 plugin APIs, capability checks, events, privacy handling, versioning, and upgrade-step conventions.",
+            "Assume Moodle ecosystem compatibility matters: plugin changes must coexist with the host instance, theme, and upgrade path.",
+            "Treat Bootstrap 5, Moodle form APIs, language strings, and renderer or template conventions as the frontend baseline rather than inventing a separate UI system.",
         ),
         typical_risks=(
-            "Capability or privacy regressions that expose restricted course, user, or grading data.",
-            "Upgrade step failures, missing version bumps, or inconsistent install and rollback behavior.",
-            "Divergence from Moodle APIs that increases maintenance cost across upgrades.",
+            "Capability, privacy, or data-exposure regressions that leak course, user, grading, or institutional information.",
+            "Broken installs or upgrades due to missing `version.php`, `db/install.xml`, `db/upgrade.php`, or incomplete capability and privacy changes.",
+            "Maintenance drag from bypassing Moodle APIs or building frontend behavior that fights Moodle's rendering and theming model.",
         ),
         expected_artifacts=(
-            "Plugin structure updates such as classes, db, lang, templates or pages, and relevant tests.",
-            "Upgrade and installation notes, capabilities, permissions, privacy, and event impacts.",
-            "Admin and teacher workflow validation for Moodle-specific navigation and forms.",
+            "Plugin files such as `version.php`, `db/install.xml`, `db/upgrade.php`, language strings, capabilities, privacy metadata, classes, forms, templates, or renderers as applicable.",
+            "Explicit install, upgrade, rollback, and permissions notes for the plugin and any stored or derived data it introduces.",
+            "QA coverage for teacher, student, admin, and manager workflows touched by the plugin, including Bootstrap 5 UI states where relevant.",
         ),
         preferred_practices=(
-            "Use Moodle extension points, capability checks, and forms APIs consistently.",
-            "Plan for install, upgrade, downgrade, and privacy/data-export implications up front.",
-            "Keep plugin responsibilities focused and well-bounded from core customizations.",
+            "Use Moodle forms, capability checks, string management, privacy APIs, and plugin upgrade paths consistently.",
+            "Keep plugin data bounded and document any new tables, scheduled tasks, events, or privacy exports explicitly.",
+            "Design UI additions to feel native to Moodle 5, including Bootstrap 5-based layout and predictable admin workflows.",
         ),
         avoid=(
-            "Do not patch Moodle core when a plugin extension point is the correct path.",
-            "Do not skip capability, privacy, or upgrade-step analysis for new data or workflows.",
-            "Do not introduce custom front-end patterns that fight Moodle's established UX unless justified.",
+            "Do not patch Moodle core when a plugin extension point is the correct solution.",
+            "Do not skip capability, privacy, versioning, install, or upgrade analysis for seemingly small features.",
+            "Do not introduce a separate frontend stack that ignores Moodle's Bootstrap 5 and plugin rendering constraints unless an exception is approved.",
         ),
     ),
     "moodle5-portal": StackProfile(
         key="moodle5-portal",
         name="Moodle 5 Portal",
-        purpose="Broader Moodle-based portals and institutional workflows that span multiple modules, audiences, or operational teams.",
-        constraints=(
-            "Fit the existing portal information architecture, Moodle 5 capabilities, and operational ownership model.",
-            "Treat integrations, reporting, and data synchronization as first-class planning concerns.",
-            "Preserve portal-wide consistency for navigation, permissions, and institutional branding or templating.",
+        purpose="Institution-facing Moodle 5 portal work that spans multiple workflows, operational teams, reports, and user roles while still living inside Moodle's ecosystem and Bootstrap 5 UI constraints.",
+        when_it_fits=(
+            "The feature crosses portal navigation, reporting, enrollment, certification, institution-facing operations, or multiple Moodle touchpoints.",
+            "Operational users need coordinated workflows, dashboards, filters, reports, exports, or support tooling that go beyond a small isolated plugin.",
+            "The solution can remain aligned with Moodle 5 services, Bootstrap 5 UI conventions, shared permissions, and portal-wide governance.",
+        ),
+        poor_fit=(
+            "Small self-contained functionality that should remain a bounded Moodle plugin instead of portal work.",
+            "Greenfield product requests that would be better served by the Laravel + Inertia + React stack rather than portal customizations.",
+            "Features that need to ignore shared portal permissions, reporting standards, or Moodle ecosystem constraints to be viable.",
+        ),
+        core_constraints=(
+            "Portal behavior must fit existing Moodle 5 capabilities, service boundaries, navigation patterns, and Bootstrap 5-based operational UI expectations.",
+            "Treat reporting, pagination, exports, cohort or enrollment flows, and institutional data sensitivity as first-class design constraints.",
+            "Assume multi-role operational ownership: supportability, traceability, and rollout safety matter as much as the feature itself.",
         ),
         typical_risks=(
-            "Cross-module permission leakage or inconsistent behavior between portal areas.",
-            "Reporting, cohort, enrollment, or synchronization issues that affect institutions at scale.",
-            "Operational drift when portal workflows are planned without admin and support teams in mind.",
+            "Cross-area permission leakage, role confusion, or inconsistent workflow behavior between portal surfaces.",
+            "Performance and operability failures in large listings, reports, exports, enrollments, or synchronization-heavy flows.",
+            "Portal drift caused by ad hoc solutions that bypass shared portal conventions, observability needs, or institutional support requirements.",
         ),
         expected_artifacts=(
-            "Portal area structure, module touchpoints, integration notes, and affected operational workflows.",
-            "Data-flow or reporting impacts across portal surfaces, including pagination and exports where relevant.",
-            "Deployment, rollback, and post-release validation steps for institution-facing operations.",
+            "Portal page, renderer, template, integration, permission, and reporting changes mapped clearly to the affected operational flows.",
+            "Documented pagination, filtering, export, audit, rollout, and rollback expectations for institution-facing screens and jobs.",
+            "QA and production validation steps that cover real administrative users, support teams, and shared portal operations.",
         ),
         preferred_practices=(
-            "Document which portal roles, cohorts, reports, and operational teams are affected.",
-            "Design for supportability, observability, and safe rollout across shared institutional environments.",
-            "Keep Moodle-native patterns and portal conventions aligned instead of mixing ad hoc solutions.",
+            "Use Moodle-native capabilities and services while keeping portal workflows explicit, observable, and supportable.",
+            "Design for backend pagination, predictable filters, reusable Bootstrap 5 admin patterns, and safe exports or batch actions.",
+            "Document which roles, institutions, reports, and support teams are affected so delivery planning reflects operational reality.",
         ),
         avoid=(
-            "Do not treat portal features as isolated if they cross permissions, reporting, or integrations.",
-            "Do not add institution-facing workflow changes without rollback and support validation.",
-            "Do not bypass shared portal conventions for navigation, logging, or data handling.",
+            "Do not treat institution-wide portal changes as if they were isolated plugin tweaks.",
+            "Do not bypass shared portal auth, navigation, reporting, or observability standards for local convenience.",
+            "Do not ship operationally sensitive portal changes without controlled deployment and rollback planning.",
         ),
     ),
     "laravel-inertia-react": StackProfile(
         key="laravel-inertia-react",
         name="Laravel + Inertia + React",
-        purpose="Modern Laravel applications with server-driven routing and React-based UI through Inertia.",
-        constraints=(
-            "Keep Laravel as the backend source of truth for routing, authorization, validation, and data access.",
-            "Use Inertia page patterns and React components without turning the app into an unmanaged SPA.",
-            "Plan backend and frontend changes together, including shared form, policy, and API contract expectations.",
+        purpose="The company's standard modern web application stack for business systems that use Laravel on the backend and Inertia with React on the frontend.",
+        when_it_fits=(
+            "The feature belongs in a modern Laravel application with server-owned routing, validation, authorization, and data access.",
+            "The UI benefits from React components and Inertia pages while still fitting a server-driven application model instead of a disconnected SPA.",
+            "The work can follow the company conventions around React + TypeScript starterkit usage, Tailwind, shadcn/ui, backend pagination, reusable form components, and traceable Laravel delivery practices.",
+        ),
+        poor_fit=(
+            "Moodle plugin or portal requests that need to live inside Moodle's ecosystem and Bootstrap 5 reality.",
+            "Legacy CakePHP 2.x enhancements where compatibility matters more than adopting the modern stack.",
+            "Features that only make sense as a standalone public API platform or a custom client-only application outside the current Laravel + Inertia operating model.",
+        ),
+        core_constraints=(
+            "Laravel remains the source of truth for routing, validation, authorization, persistence, jobs, notifications, and business rules.",
+            "Use the React + TypeScript starterkit direction, Tailwind styling, and shadcn/ui-based reusable components rather than ad hoc UI patterns.",
+            "Follow company defaults such as REST-style routes and controllers, `spatie/laravel-permission` for roles or permissions, Socialite where external auth or SSO is in scope, backend-driven pagination, and disciplined migrations or seeders.",
         ),
         typical_risks=(
-            "Boundary drift between Laravel controllers, Inertia responses, and React page responsibilities.",
-            "Authorization, validation, or state-management gaps between server and client behavior.",
-            "Inconsistent component patterns, duplicated logic, or deployment issues across PHP and front-end assets.",
+            "Boundary drift between controllers, requests, policies, Inertia responses, and React pages leading to duplicated or contradictory logic.",
+            "Authorization, validation, pagination, or form-state problems caused by pushing too much behavior into the client layer.",
+            "Inconsistent UI, brittle deployments, or broken environments when migrations, seeders, assets, permissions, or auth integrations are handled informally.",
         ),
         expected_artifacts=(
-            "Laravel routes, controllers, policies, requests, models, migrations, and tests as needed.",
-            "Inertia pages, React components, form flows, and front-end test notes where the feature changes UI.",
-            "Deployment and QA notes for migrations, assets, queues, and environment-sensitive behavior.",
+            "Laravel routes, controllers, form requests, policies, actions or services, models, migrations, seeders, and tests as required by the feature.",
+            "Inertia pages, React + TypeScript components, Tailwind or shadcn/ui composition, and reusable form or table components where the UI changes.",
+            "Explicit handling of permissions, Socialite integrations when relevant, backend pagination, QA, deployment, and rollback-sensitive migrations or config changes.",
         ),
         preferred_practices=(
-            "Keep validation, authorization, and business rules centered in Laravel.",
-            "Use Inertia page props intentionally and keep React components focused and reusable.",
-            "Plan migrations, seed data, asset builds, and end-to-end admin flows together.",
+            "Keep business rules, permissions, and validation centered in Laravel while using Inertia page props intentionally.",
+            "Prefer reusable Tailwind or shadcn/ui components, typed React props, backend pagination, and shared form patterns over feature-by-feature improvisation.",
+            "Treat migrations, seeders, permission changes, QA, and controlled deployment as part of the feature's standard artifact set rather than optional cleanup.",
         ),
         avoid=(
-            "Do not introduce parallel front-end data flows that bypass Laravel or Inertia without justification.",
-            "Do not duplicate authorization or validation logic across backend and frontend unnecessarily.",
-            "Do not ship UI-heavy changes without covering related backend constraints, QA, and rollback steps.",
+            "Do not create parallel client-side data flows that bypass Laravel, Inertia, or the established permission model without an approved exception.",
+            "Do not duplicate authorization or validation rules across backend and frontend when Laravel should own the canonical behavior.",
+            "Do not skip migrations, seeders, permission setup, reusable form components, or backend pagination where the feature clearly needs them.",
         ),
     ),
 }
@@ -167,6 +220,108 @@ def get_stack_profile(stack_id: str | None) -> StackProfile | None:
     return APPROVED_STACKS.get(stack_id)
 
 
+def _split_frontmatter(content: str) -> tuple[dict[str, str], str] | tuple[None, str]:
+    """Extract simple YAML-like frontmatter from the stack context."""
+
+    if not content.startswith("---\n"):
+        return None, content
+
+    end_index = content.find("\n---\n", 4)
+    if end_index == -1:
+        return None, content
+
+    raw_frontmatter = content[4:end_index].splitlines()
+    data: dict[str, str] = {}
+    for line in raw_frontmatter:
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        data[key.strip()] = value.strip()
+
+    body = content[end_index + len("\n---\n") :]
+    return data, body
+
+
+def _section_body(body: str, heading: str) -> str:
+    """Return the markdown body for a given section heading."""
+
+    start = body.find(heading)
+    if start == -1:
+        return ""
+
+    start += len(heading)
+    next_heading = body.find("\n## ", start)
+    if next_heading == -1:
+        next_heading = len(body)
+    return body[start:next_heading].strip()
+
+
+def validate_stack_context_content(content: str) -> list[str]:
+    """Validate stack context structure and metadata."""
+
+    errors: list[str] = []
+    frontmatter, body = _split_frontmatter(content)
+
+    if frontmatter is None:
+        return ["Missing or malformed frontmatter block."]
+
+    stack_id = frontmatter.get("stack_id")
+    stack_name = frontmatter.get("stack_name")
+    profile = get_stack_profile(stack_id)
+
+    if not stack_id:
+        errors.append("Missing frontmatter key: stack_id.")
+    elif profile is None:
+        errors.append(f"Unknown approved stack id in context: {stack_id}.")
+
+    if not stack_name:
+        errors.append("Missing frontmatter key: stack_name.")
+    elif profile and stack_name != profile.name:
+        errors.append(
+            f"stack_name '{stack_name}' does not match approved name '{profile.name}'."
+        )
+
+    for heading in STACK_CONTEXT_REQUIRED_SECTIONS:
+        if heading not in body:
+            errors.append(f"Missing required section: {heading}.")
+            continue
+
+        section_body = _section_body(body, heading)
+        if "- " not in section_body:
+            errors.append(f"Section {heading} must contain at least one bullet.")
+
+    return errors
+
+
+def load_stack_profile_from_context(project_root: Path) -> tuple[StackProfile | None, list[str]]:
+    """Load and validate the registered stack from ``stack.md`` when available."""
+
+    context_path = project_root / STACK_CONTEXT_FILE
+    if not context_path.exists():
+        return None, []
+
+    try:
+        content = context_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return None, [f"Could not read {STACK_CONTEXT_FILE.as_posix()}: {exc}"]
+
+    errors = validate_stack_context_content(content)
+    if errors:
+        return None, errors
+
+    frontmatter, _body = _split_frontmatter(content)
+    if frontmatter is None:
+        return None, ["Missing or malformed frontmatter block."]
+
+    profile = get_stack_profile(frontmatter.get("stack_id"))
+    if profile is None:
+        return None, [
+            f"Unknown approved stack id in {STACK_CONTEXT_FILE.as_posix()}."
+        ]
+
+    return profile, []
+
+
 def render_stack_context(profile: StackProfile) -> str:
     """Render the durable project stack context file."""
 
@@ -184,8 +339,12 @@ def render_stack_context(profile: StackProfile) -> str:
         f"- **Name**: {profile.name}\n\n"
         f"## Purpose / Typical Use\n\n"
         f"- {profile.purpose}\n\n"
-        f"## Main Constraints\n\n"
-        f"{bullets(profile.constraints)}\n\n"
+        f"## When This Stack Fits\n\n"
+        f"{bullets(profile.when_it_fits)}\n\n"
+        f"## When This Stack Is a Poor Fit\n\n"
+        f"{bullets(profile.poor_fit)}\n\n"
+        f"## Core Constraints\n\n"
+        f"{bullets(profile.core_constraints)}\n\n"
         f"## Typical Risks\n\n"
         f"{bullets(profile.typical_risks)}\n\n"
         f"## Expected Artifacts\n\n"

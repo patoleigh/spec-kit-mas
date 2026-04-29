@@ -55,6 +55,7 @@ from .stacks import (
     STACK_CONTEXT_FILE,
     approved_stack_help,
     get_stack_profile,
+    load_stack_profile_from_context,
     write_stack_context,
 )
 
@@ -1170,8 +1171,15 @@ def init(
                 raise typer.Exit(1)
 
     existing_init_opts = load_init_options(project_path)
+    existing_registered_stack = get_stack_profile(existing_init_opts.get("stack"))
+    stack_context_profile, stack_context_errors = load_stack_profile_from_context(project_path)
+    stack_context_mismatch = (
+        existing_registered_stack is not None
+        and stack_context_profile is not None
+        and existing_registered_stack.key != stack_context_profile.key
+    )
     if selected_stack is None:
-        selected_stack = get_stack_profile(existing_init_opts.get("stack"))
+        selected_stack = existing_registered_stack or stack_context_profile
 
     if ai_assistant:
         if ai_assistant not in AGENT_CONFIG:
@@ -1513,6 +1521,82 @@ def init(
 
     console.print(tracker.render())
     console.print("\n[bold green]Project ready.[/bold green]")
+
+    if requested_stack and existing_registered_stack and existing_registered_stack.key != selected_stack.key:
+        console.print()
+        console.print(
+            Panel(
+                f"Registered stack updated from [cyan]{existing_registered_stack.name}[/cyan] "
+                f"([dim]{existing_registered_stack.key}[/dim]) to "
+                f"[cyan]{selected_stack.name}[/cyan] [dim]({selected_stack.key})[/dim].\n"
+                f"The project stack context at [cyan]{STACK_CONTEXT_FILE.as_posix()}[/cyan] "
+                "and the durable init metadata were rewritten to match the new selection.",
+                title="[yellow]Stack Context Updated[/yellow]",
+                border_style="yellow",
+                padding=(1, 2),
+            )
+        )
+    elif stack_context_mismatch:
+        console.print()
+        console.print(
+            Panel(
+                f"The stack recorded in `.specify/init-options.json` "
+                f"([cyan]{existing_registered_stack.name}[/cyan]) did not match the stack declared in "
+                f"[cyan]{STACK_CONTEXT_FILE.as_posix()}[/cyan].\n"
+                f"Init treated [cyan]{existing_registered_stack.name}[/cyan] as the registered source "
+                "of truth and rewrote the stack context file to match it.",
+                title="[yellow]Stack Context Normalized[/yellow]",
+                border_style="yellow",
+                padding=(1, 2),
+            )
+        )
+    elif stack_context_errors and selected_stack is not None:
+        console.print()
+        console.print(
+            Panel(
+                f"An existing stack context file was incomplete or invalid, but the project's "
+                f"registered stack could still be recovered as [cyan]{selected_stack.name}[/cyan].\n"
+                f"The stack context file at [cyan]{STACK_CONTEXT_FILE.as_posix()}[/cyan] was rewritten "
+                "during init so future workflow commands can treat it as trusted project context.",
+                title="[yellow]Stack Context Repaired[/yellow]",
+                border_style="yellow",
+                padding=(1, 2),
+            )
+        )
+    elif existing_registered_stack is None and stack_context_profile is not None and requested_stack is None:
+        console.print()
+        console.print(
+            Panel(
+                f"Recovered the registered stack [cyan]{selected_stack.name}[/cyan] from "
+                f"[cyan]{STACK_CONTEXT_FILE.as_posix()}[/cyan] and persisted it back into "
+                ".specify/init-options.json.",
+                title="[cyan]Stack Context Recovered[/cyan]",
+                border_style="cyan",
+                padding=(1, 2),
+            )
+        )
+    elif selected_stack is None:
+        stack_detail = (
+            "A stack context file exists but is incomplete or invalid."
+            if stack_context_errors
+            else "No approved stack is currently registered for this project."
+        )
+        repair_hint = (
+            f"Repair or replace [cyan]{STACK_CONTEXT_FILE.as_posix()}[/cyan] and re-run "
+            "[cyan]specify init[/cyan] with [cyan]--stack <approved-stack-id>[/cyan]."
+        )
+        console.print()
+        console.print(
+            Panel(
+                f"{stack_detail}\n"
+                "`.specify/context/stack.md` is treated as high-value project context for "
+                "/speckit.specify, /speckit.plan, and /speckit.tasks.\n"
+                f"{repair_hint}",
+                title="[yellow]Stack Context Missing[/yellow]",
+                border_style="yellow",
+                padding=(1, 2),
+            )
+        )
 
     # Agent folder security notice
     agent_config = AGENT_CONFIG.get(selected_ai)

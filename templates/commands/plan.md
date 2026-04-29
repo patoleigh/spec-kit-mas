@@ -59,25 +59,44 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 1. **Setup**: Run `{SCRIPT}` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
-2. **Load context**: Read FEATURE_SPEC, `/memory/constitution.md`, and `.specify/context/stack.md` if it exists. Load IMPL_PLAN template (already copied).
+2. **Load context**:
+   - Read FEATURE_SPEC, `/memory/constitution.md`, `.specify/init-options.json` if it exists, and `.specify/context/stack.md` if it exists
+   - Treat the constitution and stack context as the two high-value project governance inputs for planning, alongside the feature spec
+   - If `/memory/constitution.md` is missing, ERROR and tell the user to restore it before planning
+   - If `.specify/init-options.json` declares a `stack`, then `.specify/context/stack.md` is REQUIRED:
+     - If the file is missing, ERROR and tell the user to repair the project stack context before planning
+     - If the file exists but is missing `stack_id`, `stack_name`, or any of these sections, ERROR and tell the user to repair it before planning:
+       - `## Purpose / Typical Use`
+       - `## When This Stack Fits`
+       - `## When This Stack Is a Poor Fit`
+       - `## Core Constraints`
+       - `## Typical Risks`
+       - `## Expected Artifacts`
+       - `## Preferred Practices`
+       - `## Things To Avoid`
+   - If `.specify/context/stack.md` exists without stack metadata in init options, do not ignore that silently: load it, note the metadata mismatch, and tell the user to normalize the project stack state before relying on planning output
+   - Load IMPL_PLAN template (already copied)
 
 3. **Execute plan workflow**: Follow the structure in IMPL_PLAN template to:
    - Treat `.specify/context/stack.md` as the durable project stack choice when
      present; do not re-select a stack from scratch unless a justified
      deviation or exception is required
    - Fill Technical Context, including registered project stack, selected
-     approved stack, stack fit, exception status, stack-profile constraints,
-     stack-specific risks, expected stack artifacts, and delivery-sensitive
-     context (mark unknowns as "NEEDS CLARIFICATION")
+     approved stack, stack fit, poor-fit or strain signals, exception status,
+     stack-profile constraints, stack-specific risks, expected stack artifacts,
+     and delivery-sensitive context (mark unknowns as "NEEDS CLARIFICATION")
    - Fill Constitution Check section from constitution with explicit pass/fail
      reasoning for stack alignment, security/privacy, data impact,
      auditability, admin workflows, operational reliability, maintainability,
      deployment path, and rollback readiness
    - Confirm whether the feature fits the registered project stack, and if it
      does not, document the narrowest justified deviation or escalation path
+   - Derive expected implementation artifacts from the stack context and ensure
+     the plan reflects them explicitly instead of treating them as optional
    - Fill Impact Assessment and Implementation Considerations sections based on
      the feature spec, constitution, and stack profile
-   - Evaluate gates (ERROR if violations unjustified)
+   - Evaluate gates (ERROR if violations unjustified, stack context is missing
+     where required, or stack conflict is real but not explicitly justified)
    - Phase 0: Generate research.md (resolve all NEEDS CLARIFICATION)
    - Phase 1: Generate data-model.md, contracts/, quickstart.md
    - Phase 1: Ensure the resulting design artifacts support the selected stack

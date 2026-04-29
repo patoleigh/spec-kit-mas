@@ -63,15 +63,20 @@ You **MUST** consider the user input before proceeding (if not empty).
 2. **Load design documents**: Read from FEATURE_DIR:
    - **Required**: plan.md (tech stack, libraries, structure), spec.md (user stories with priorities)
    - **Optional**: data-model.md (entities), contracts/ (interface contracts), research.md (decisions), quickstart.md (test scenarios)
+   - **Project context**: `.specify/init-options.json` if it exists and `.specify/context/stack.md` if it exists
+   - If init options declare a `stack`, treat `.specify/context/stack.md` as required high-value context:
+     - If it is missing or clearly incomplete, ERROR and tell the user to repair the project stack context before generating tasks
    - Note: Not all projects have all documents. Generate tasks based on what's available.
 
 3. **Execute task generation workflow**:
    - Load plan.md and extract tech stack, libraries, project structure
    - Load spec.md and extract user stories with their priorities (P1, P2, P3, etc.)
+   - Load stack context when present and use it to confirm expected artifacts, constraints, risky areas, and practices that tasks must cover
    - If data-model.md exists: Extract entities and map to user stories
    - If contracts/ exists: Map interface contracts to user stories
    - If research.md exists: Extract decisions for setup tasks
    - Generate tasks organized by user story (see Task Generation Rules below)
+   - Ensure setup, foundational, and polish tasks reflect stack-specific artifacts such as permissions, migrations, seeders, pagination, admin workflows, Bootstrap 5 portal or plugin concerns, or Laravel frontend/backend coordination when relevant
    - Generate dependency graph showing user story completion order
    - Create parallel execution examples per user story
    - Validate task completeness (each user story has all needed tasks, independently testable)

@@ -22,6 +22,7 @@ delivery-sensitive context]
 **Registered Project Stack**: [Read from `.specify/context/stack.md`; if absent, state that no stack is registered yet]<br>
 **Selected Approved Stack**: [Normally matches the registered stack; if not, explain the exception clearly]<br>
 **Stack Fit / Justification**: [Why this feature fits the registered stack and existing product context]<br>
+**Poor-Fit / Strain Signals**: [Any aspects of the feature that pull against the registered stack, and whether they require an exception]<br>
 **Deviation / Exception Needed**: [None or explicit exception with rationale, scope, and approver path]<br>
 **Stack Profile Constraints**: [Relevant constraints pulled from `.specify/context/stack.md`]<br>
 **Stack-Specific Risks**: [Relevant risks pulled from `.specify/context/stack.md`]<br>

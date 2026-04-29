@@ -49,6 +49,22 @@ class TestInitIntegrationFlag:
         assert "Unknown stack" in result.output
         assert "laravel-inertia-react" in result.output
 
+    def test_init_without_stack_warns_about_missing_stack_context(self, tmp_path):
+        from typer.testing import CliRunner
+        from specify_cli import app
+
+        runner = CliRunner()
+        project = tmp_path / "no-stack-project"
+        result = runner.invoke(app, [
+            "init", str(project), "--integration", "copilot", "--script", "sh", "--no-git",
+        ], catch_exceptions=False)
+
+        normalized_output = _normalize_cli_output(result.output)
+        assert result.exit_code == 0, result.output
+        assert "Stack Context Missing" in normalized_output
+        assert "No approved stack is currently registered for this project." in normalized_output
+        assert not (project / ".specify" / "context" / "stack.md").exists()
+
     def test_integration_copilot_creates_files(self, tmp_path):
         from typer.testing import CliRunner
         from specify_cli import app
@@ -261,6 +277,8 @@ class TestInitIntegrationFlag:
         assert "stack_id: laravel-inertia-react" in content
         assert "Laravel + Inertia + React" in content
         assert "Project Stack Profile" in content
+        assert "When This Stack Fits" in content
+        assert "When This Stack Is a Poor Fit" in content
         assert "Things To Avoid" in content
 
         plan_prompt = (project / ".github" / "prompts" / "speckit.plan.prompt.md").read_text(
@@ -319,6 +337,41 @@ class TestInitIntegrationFlag:
         assert opts["stack"] == "moodle5-plugin"
         assert opts["stack_name"] == "Moodle 5 Plugin"
         assert (project / ".specify" / "context" / "stack.md").exists()
+
+    def test_reinit_with_different_stack_updates_registered_stack(self, tmp_path):
+        from typer.testing import CliRunner
+        from specify_cli import app
+
+        project = tmp_path / "stack-switch"
+        project.mkdir()
+        old_cwd = os.getcwd()
+        try:
+            os.chdir(project)
+            runner = CliRunner()
+            first = runner.invoke(app, [
+                "init", "--here", "--integration", "copilot",
+                "--stack", "cakephp2-mysql",
+                "--script", "sh", "--no-git",
+            ], catch_exceptions=False)
+            second = runner.invoke(app, [
+                "init", "--here", "--force", "--integration", "copilot",
+                "--stack", "laravel-inertia-react",
+                "--script", "sh", "--no-git",
+            ], catch_exceptions=False)
+        finally:
+            os.chdir(old_cwd)
+
+        normalized_output = _normalize_cli_output(second.output)
+        assert first.exit_code == 0, first.output
+        assert second.exit_code == 0, second.output
+        assert "Stack Context Updated" in normalized_output
+
+        opts = json.loads((project / ".specify" / "init-options.json").read_text(encoding="utf-8"))
+        assert opts["stack"] == "laravel-inertia-react"
+        assert opts["stack_name"] == "Laravel + Inertia + React"
+        assert "Laravel + Inertia + React" in (project / ".specify" / "context" / "stack.md").read_text(
+            encoding="utf-8"
+        )
 
 
 class TestForceExistingDirectory:

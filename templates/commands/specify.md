@@ -107,7 +107,14 @@ Given that feature description, do this:
    - The spec directory name and the git branch name are independent — they may be the same but that is the user's choice
    - The spec directory and file are always created by this command, never by the hook
 
-4. Load `templates/spec-template.md` to understand required sections.
+4. **Load project context before drafting**:
+   - Read `templates/spec-template.md` to understand required sections
+   - Read `.specify/init-options.json` if it exists
+   - Read `.specify/context/stack.md` if it exists
+   - If init options declare a `stack`, treat `.specify/context/stack.md` as required contextual input:
+     - If the file is missing or clearly incomplete, ERROR and tell the user to repair the registered stack context before drafting the spec
+   - Use the registered stack context to fill `Target Stack`, shape operational context, and catch obvious stack conflicts without turning the spec into an implementation plan
+   - If the requested feature appears to be a poor fit for the registered stack, record that tension explicitly in the spec assumptions or as a high-impact clarification instead of silently drifting to another stack
 
 5. Follow this execution flow:
     1. Parse user description from arguments
